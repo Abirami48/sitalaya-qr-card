@@ -1,11 +1,33 @@
-import React, { useState } from 'react'; // Import useState
+import React, { useState } from 'react';
 import data from './data.json';
-import { Phone, MapPin, Instagram, Facebook, Youtube, CheckCircle, Mail, UserPlus, QrCode, X } from 'lucide-react'; // Added QrCode and X icons
+// Added Share2 and Copy icons
+import { Phone, MapPin, Instagram, Facebook, Youtube, CheckCircle, Mail, UserPlus, QrCode, X, Share2, Copy } from 'lucide-react';
 import { FaWhatsapp } from "react-icons/fa";
-import QRCode from "react-qr-code"; // Import the QR library
+import QRCode from "react-qr-code";
 
 function App() {
-  const [showQR, setShowQR] = useState(false); // State to toggle modal
+  const [showQR, setShowQR] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false); // To show "Copied!" feedback
+
+  // Logic to Share the Link or Copy it
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${data.name} - Digital Card`,
+          text: `Check out ${data.name}'s digital business card.`,
+          url: window.location.href,
+        });
+      } catch (error) {
+        console.log('Error sharing:', error);
+      }
+    } else {
+      // Fallback for desktops/browsers without share support
+      navigator.clipboard.writeText(window.location.href);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000); // Reset after 2 seconds
+    }
+  };
 
   // Logic to generate and download the vCard
   const handleSaveContact = () => {
@@ -17,7 +39,7 @@ TITLE:${data.designation || 'Service Provider'}
 TEL;TYPE=CELL:${data.mobile}
 EMAIL;TYPE=WORK:${data.email}
 ADR;TYPE=WORK:;;${data.address};;;;
-URL;TYPE=Website:${window.location.href} 
+URL;TYPE=Website:${window.location.href}
 END:VCARD`;
 
     const blob = new Blob([vCardData], { type: 'text/vcard;charset=utf-8' });
@@ -35,28 +57,41 @@ END:VCARD`;
       
       {/* QR Code Modal Overlay */}
       {showQR && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4">
-          <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4 transition-all">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center relative animate-fade-in-up">
+            
+            {/* Close Button */}
             <button 
               onClick={() => setShowQR(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 transition-colors bg-gray-100 rounded-full p-1"
             >
-              <X size={24} />
+              <X size={20} />
             </button>
             
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Scan to Connect</h3>
-            <p className="text-slate-500 mb-6 text-sm">Point your camera at the code below</p>
+            <h3 className="text-xl font-bold text-slate-800 mb-1">Scan to Connect</h3>
+            <p className="text-slate-500 mb-6 text-sm">Share this card instantly</p>
             
-            <div className="bg-white p-2 rounded-lg inline-block">
-                {/* This generates the QR pointing to the current page URL */}
+            <div className="bg-white p-3 rounded-xl border-2 border-slate-100 inline-block shadow-sm">
                 <QRCode 
                   value={window.location.href} 
-                  size={200}
-                  level={"H"} // High error correction
+                  size={180}
+                  level={"H"}
                 />
             </div>
             
-            <p className="mt-6 text-xs text-gray-400">@{data.name}</p>
+            {/* NEW SHARE BUTTON INSIDE MODAL */}
+            <div className="mt-8 flex justify-center">
+                <button 
+                    onClick={handleShare}
+                    className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-full hover:bg-blue-700 transition-all shadow-lg hover:shadow-blue-500/30 active:scale-95 w-full justify-center"
+                >
+                    {/* Switch icon based on whether we are showing 'Copied' state */}
+                    {copySuccess ? <CheckCircle size={18} /> : <Share2 size={18} />}
+                    <span className="font-semibold">
+                        {copySuccess ? "Link Copied!" : "Share Link"}
+                    </span>
+                </button>
+            </div>
           </div>
         </div>
       )}
@@ -68,13 +103,13 @@ END:VCARD`;
         <div className="bg-slate-900 text-white p-8 text-center relative">
             <div className="absolute top-0 left-0 w-full h-full bg-blue-600 opacity-10"></div>
             
-            {/* QR Toggle Button (Top Right) */}
+            {/* QR Toggle Button */}
             <button 
                 onClick={() => setShowQR(true)}
-                className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors backdrop-blur-md"
+                className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors backdrop-blur-md group"
                 title="Show QR Code"
             >
-                <QrCode size={20} className="text-white" />
+                <QrCode size={20} className="text-white group-hover:scale-110 transition-transform" />
             </button>
 
             <h1 className="text-3xl font-bold tracking-tight relative z-10">{data.name}</h1>
@@ -108,6 +143,7 @@ END:VCARD`;
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4 border-t border-gray-100">
             <SocialIcon Link={data.socials.instagram} Icon={Instagram} color="text-pink-600" />
             <SocialIcon Link={data.socials.facebook} Icon={Facebook} color="text-blue-600" />
+            <SocialIcon Link={data.socials.youtube} Icon={Youtube} color="text-red-600" />
             <SocialIcon Link={data.socials.whatsapp} Icon={FaWhatsapp} color="text-green-500" />
             
             <button 
@@ -125,7 +161,7 @@ END:VCARD`;
   );
 }
 
-// ... Keep your ContactRow and SocialIcon components exactly as they were ...
+// Helper Components
 const ContactRow = ({ icon, text, href }) => (
   <div className="flex items-start space-x-3 text-slate-600 hover:text-slate-900 transition-colors">
     <div className="mt-1 text-blue-600">{icon}</div>
