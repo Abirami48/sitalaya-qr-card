@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react'; // Import useState
 import data from './data.json';
-import { Phone, MapPin, Instagram, Facebook, Youtube, CheckCircle, Mail, UserPlus } from 'lucide-react';
+import { Phone, MapPin, Instagram, Facebook, Youtube, CheckCircle, Mail, UserPlus, QrCode, X } from 'lucide-react'; // Added QrCode and X icons
 import { FaWhatsapp } from "react-icons/fa";
+import QRCode from "react-qr-code"; // Import the QR library
 
 function App() {
-  
+  const [showQR, setShowQR] = useState(false); // State to toggle modal
+
   // Logic to generate and download the vCard
   const handleSaveContact = () => {
-    // Construct the vCard content string
     const vCardData = `BEGIN:VCARD
 VERSION:3.0
 FN:${data.name}
@@ -16,12 +17,9 @@ TITLE:${data.designation || 'Service Provider'}
 TEL;TYPE=CELL:${data.mobile}
 EMAIL;TYPE=WORK:${data.email}
 ADR;TYPE=WORK:;;${data.address};;;;
-URL;TYPE=Instagram:${data.socials.instagram}
-URL;TYPE=Facebook:${data.socials.facebook}
-URL;TYPE=Website:${data.socials.youtube}
+URL;TYPE=Website:${window.location.href} 
 END:VCARD`;
 
-    // Create a blob and download link
     const blob = new Blob([vCardData], { type: 'text/vcard;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -34,12 +32,51 @@ END:VCARD`;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
+      
+      {/* QR Code Modal Overlay */}
+      {showQR && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 backdrop-blur-sm p-4">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center relative">
+            <button 
+              onClick={() => setShowQR(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800"
+            >
+              <X size={24} />
+            </button>
+            
+            <h3 className="text-xl font-bold text-slate-800 mb-2">Scan to Connect</h3>
+            <p className="text-slate-500 mb-6 text-sm">Point your camera at the code below</p>
+            
+            <div className="bg-white p-2 rounded-lg inline-block">
+                {/* This generates the QR pointing to the current page URL */}
+                <QRCode 
+                  value={window.location.href} 
+                  size={200}
+                  level={"H"} // High error correction
+                />
+            </div>
+            
+            <p className="mt-6 text-xs text-gray-400">@{data.name}</p>
+          </div>
+        </div>
+      )}
+
       {/* Main Card Container */}
       <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden transform transition-all hover:shadow-3xl">
         
         {/* Header Section */}
         <div className="bg-slate-900 text-white p-8 text-center relative">
             <div className="absolute top-0 left-0 w-full h-full bg-blue-600 opacity-10"></div>
+            
+            {/* QR Toggle Button (Top Right) */}
+            <button 
+                onClick={() => setShowQR(true)}
+                className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors backdrop-blur-md"
+                title="Show QR Code"
+            >
+                <QrCode size={20} className="text-white" />
+            </button>
+
             <h1 className="text-3xl font-bold tracking-tight relative z-10">{data.name}</h1>
             <p className="text-blue-200 mt-1 relative z-10">{data.designation || 'Service Provider'}</p>
         </div>
@@ -47,7 +84,6 @@ END:VCARD`;
         {/* Content Body */}
         <div className="p-8">
           
-          {/* Contact Details */}
           <div className="space-y-4 mb-8">
             <ContactRow icon={<Phone size={20} />} text={data.mobile} href={`tel:${data.mobile}`} />
             <ContactRow icon={<Mail size={20} />} text={data.email} href={`mailto:${data.email}`} />
@@ -56,7 +92,6 @@ END:VCARD`;
 
           <hr className="border-gray-100 my-6" />
 
-          {/* Services Section */}
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-slate-800 mb-4 uppercase tracking-wider text-sm">Services Offered</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -69,17 +104,15 @@ END:VCARD`;
             </div>
           </div>
 
-          {/* Social Media Footer with Save Button */}
+          {/* Social Media Footer */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4 border-t border-gray-100">
             <SocialIcon Link={data.socials.instagram} Icon={Instagram} color="text-pink-600" />
             <SocialIcon Link={data.socials.facebook} Icon={Facebook} color="text-blue-600" />
-            <SocialIcon Link={data.socials.youtube} Icon={Youtube} color="text-red-600" />
             <SocialIcon Link={data.socials.whatsapp} Icon={FaWhatsapp} color="text-green-500" />
             
-            {/* NEW SAVE CONTACT BUTTON */}
             <button 
               onClick={handleSaveContact}
-              className="flex items-center space-x-2 bg-slate-900 text-white px-4 py-2 rounded-full hover:bg-slate-800 transition-colors shadow-md ml-2"
+              className="flex items-center space-x-2 bg-slate-900 text-white px-5 py-2.5 rounded-full hover:bg-slate-800 transition-colors shadow-lg shadow-slate-200 ml-2 active:scale-95 transform duration-150"
             >
               <UserPlus size={18} />
               <span className="text-sm font-semibold">Save Contact</span>
@@ -92,7 +125,7 @@ END:VCARD`;
   );
 }
 
-// Helper Components
+// ... Keep your ContactRow and SocialIcon components exactly as they were ...
 const ContactRow = ({ icon, text, href }) => (
   <div className="flex items-start space-x-3 text-slate-600 hover:text-slate-900 transition-colors">
     <div className="mt-1 text-blue-600">{icon}</div>
